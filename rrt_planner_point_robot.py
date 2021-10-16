@@ -100,28 +100,60 @@ def pointToVertex(p):
 def pickvertex():
     return random.choice( range(len(vertices) ))
 
-def lineFromPoints(p1,p2):
-    #TODO
-    return None
-
-
 def pointPointDistance(p1,p2):
     #TODO
-    return 0
+    return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 def closestPointToPoint(G,p2):
     #TODO
     #return vertex index
-    return 0
+    max = float('inf')
+    ret = -1
+    for v, idx in G[nodes]:
+        if  pointPointDistance(v, p2) < max:
+            ret = idx
+    return ret
 
 def lineHitsRect(p1,p2,r):
     #TODO
-    return False
+    # check that line p1,p2 doesn't intersect any of the 4 sides of the rectangle 
+    r1 = [r[0],r[1]]
+    r2 = [r[0],r[3]]
+    r3 = [r[2],r[3]]
+    r4 = [r[2],r[1]]
+    return linesIntersect(p1,p2,r1,r2) or  linesIntersect(p1,p2,r2,r3) or linesIntersect(p1,p2,r3,r4) or linesIntersect(p1,p2,r4,r1)
+
+def linesIntersect(p1,p2,p3,p4):
+    #TODO
+    # inspired from https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
+
+    # 1st test to see if both line segments are on top of each other
+    if lineFromPoints(p1,p2) == lineFromPoints(p3,p4):
+        return True
+    
+    # test see both line segments intersect 
+    def ccw(p1,p2,p3):
+        return (p3[1]-p1[1]) * (p2[0]-p1[0]) > (p2[1]-p1[1]) * (p3[0]-p1[0])
+
+    return ccw(p1,p3,p4) != ccw(p2,p3,p4) and ccw(p1,p2,p3) != ccw(p1,p2,p4)
+
+def lineFromPoints(p1,p2):
+    #TODO
+    # return line equation y=mx+b
+    if p1[0] == p2[0]:
+        return "x={}".format(p1[0])
+
+    m = (p2[1] - p1[1]) / (p2[0] - p1[0])
+    b = p1[1] - m * p1[0]
+    return "y={}x+{}".format(m,b)
 
 def inRect(p,rect,dilation):
-    """ Return 1 in p is inside rect, dilated by dilation (for edge cases). """
     #TODO
-    return False
+   if p[0]<rect[0]-dilation: return 0
+   if p[1]<rect[1]-dilation: return 0
+   if p[0]>rect[2]+dilation: return 0
+   if p[1]>rect[3]+dilation: return 0
+   return 1
 
 def rrt_search(G, tx, ty, canvas):
     #TODO
@@ -179,11 +211,9 @@ def rrt_search(G, tx, ty, canvas):
                 global prompt_before_next
                 if prompt_before_next:
                     canvas.events()
-                    print
-                    "More [c,q,g,Y]>",
+                    print "More [c,q,g,Y]>",
                     d = sys.stdin.readline().strip().lstrip()
-                    print
-                    "[" + d + "]"
+                    print "[" + d + "]"
                     if d == "c": canvas.delete()
                     if d == "q": return
                     if d == "g": prompt_before_next = 0
