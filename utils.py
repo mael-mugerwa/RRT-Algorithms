@@ -5,11 +5,11 @@ def get_args():
     parser.add_argument('--step_size', type=int, default=6)
     parser.add_argument('--rrt_sampling_policy', type=str, default="uniform")
 
-    parser.add_argument('--start_pos_x', type=int, default=0)
-    parser.add_argument('--start_pos_y', type=int, default=0)
+    parser.add_argument('--start_pos_x', type=int, default=10)
+    parser.add_argument('--start_pos_y', type=int, default=270)
     parser.add_argument('--start_pos_theta', type=float, default=0)
-    parser.add_argument('--target_pos_x', type=int, default=800)
-    parser.add_argument('--target_pos_y', type=int, default=800)
+    parser.add_argument('--target_pos_x', type=int, default=900)
+    parser.add_argument('--target_pos_y', type=int, default=30)
     parser.add_argument('--target_pos_theta', type=float, default=0)
 
     parser.add_argument('--robot_length', type=int, default=25)

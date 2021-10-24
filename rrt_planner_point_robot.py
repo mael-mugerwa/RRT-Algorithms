@@ -6,6 +6,7 @@ import _tkinter
 import sys
 import imageToRects
 import utils
+import numpy as np
 
 #display = drawSample.SelectRect(imfile=im2Small,keepcontrol=0,quitLabel="")
 args = utils.get_args()
@@ -102,15 +103,17 @@ def pickvertex():
 
 def pointPointDistance(p1,p2):
     #TODO
-    return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+    return math.sqrt(np.power((p1[0] - p2[0]), 2) + np.power((p1[1] - p2[1]), 2))
 
 def closestPointToPoint(G,p2):
     #TODO
     #return vertex index
-    max = float('inf')
+    min = float('inf')
     ret = -1
-    for v, idx in G[nodes]:
-        if  pointPointDistance(v, p2) < max:
+    for idx, v in enumerate(vertices):
+        dist = pointPointDistance(v, p2)
+        if  dist < min:
+            min = dist
             ret = idx
     return ret
 
@@ -155,6 +158,18 @@ def inRect(p,rect,dilation):
    if p[1]>rect[3]+dilation: return 0
    return 1
 
+def steer(cur, target):
+    dist = pointPointDistance(cur, target)
+    newX = cur[0]+SMALLSTEP/dist*(target[0]-cur[0])
+    newY = cur[1]+SMALLSTEP/dist*(target[1]-cur[1])
+    return [newX, newY]
+
+def printPoint(p, canvas, size, color):
+    # helper to print a point at runtime
+    x1, y1 = (p[0] - size), (p[1] - size)
+    x2, y2 = (p[0] + size), (p[1] + size)
+    canvas.showRect([x1,y1,x2,y2], outline=color, fill=color)
+
 def rrt_search(G, tx, ty, canvas):
     #TODO
     #Fill this function as needed to work ...
@@ -164,6 +179,7 @@ def rrt_search(G, tx, ty, canvas):
     n=0
     nsteps=0
     while 1:
+        nsteps = nsteps + 1
         p = genPoint()
         v = closestPointToPoint(G,p)
 
@@ -174,21 +190,25 @@ def rrt_search(G, tx, ty, canvas):
                 canvas.events()
                 n=0
 
-
+        new = steer(vertices[v], p)
+        bad = 0
         for o in obstacles:
-            #if inRect(p,o,1):
-            if lineHitsRect(vertices[v],p,o) or inRect(p,o,1):
-                print "TODO"
-                #... reject
+            if lineHitsRect(vertices[v],new,o) or inRect(new,o,1):
+                bad = 1
+                # reject
+                break
+        if bad:
+            # reject
+            continue
 
-        k = pointToVertex( p )   # is the new vertex ID
+        k = pointToVertex( new )   # is the new vertex ID
         G[nodes].append(k)
         G[edges].append( (v,k) )
         if visualize:
             canvas.polyline(  [vertices[v], vertices[k] ]  )
-
-        if pointPointDistance( p, [tx,ty] ) < SMALLSTEP:
-            print "Target achieved.", nsteps, "nodes in entire tree"
+            
+        if pointPointDistance( p, [tx,ty] ) < SMALLSTEP :
+            print "Target achieved.", len(G[nodes]), "nodes in entire tree"
             if visualize:
                 t = pointToVertex([tx, ty])  # is the new vertex ID
                 G[edges].append((k, t))
@@ -197,7 +217,6 @@ def rrt_search(G, tx, ty, canvas):
                 # while 1:
                 #     # backtrace and show the solution ...
                 #     canvas.events()
-                nsteps = 0
                 totaldist = 0
                 while 1:
                     oldp = vertices[k]  # remember point to compute distance
