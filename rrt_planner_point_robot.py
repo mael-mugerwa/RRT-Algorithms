@@ -83,7 +83,7 @@ def genPoint():
         if y>YMAX: bad = 1
     return [x,y]
 
-def returnParent(k, canvas):
+def returnParent(k, canvas, G):
     """ Return parent note for input node k. """
     for e in G[edges]:
         if e[1]==k:
@@ -109,13 +109,13 @@ def closestPointToPoint(G,p2):
     #TODO
     #return vertex index
     min = float('inf')
-    ret = -1
-    for idx, v in enumerate(vertices):
-        dist = pointPointDistance(v, p2)
+    idx = -1
+    for node in G[nodes]:
+        dist = pointPointDistance(vertices[node], p2)
         if  dist < min:
             min = dist
-            ret = idx
-    return ret
+            idx = node
+    return idx
 
 def lineHitsRect(p1,p2,r):
     #TODO
@@ -174,14 +174,16 @@ def rrt_search(G, tx, ty, canvas):
     #TODO
     #Fill this function as needed to work ...
 
-
     global sigmax_for_randgen, sigmay_for_randgen
     n=0
-    nsteps=0
+    numIterations=0
     while 1:
-        nsteps = nsteps + 1
+        numIterations = numIterations + 1  # count steps
         p = genPoint()
         v = closestPointToPoint(G,p)
+
+        if pointPointDistance(p, vertices[v]) > SMALLSTEP:
+            p = steer(vertices[v], p)
 
         if visualize:
             # if nsteps%500 == 0: redraw()  # erase generated points now and then or it gets too cluttered
@@ -190,25 +192,22 @@ def rrt_search(G, tx, ty, canvas):
                 canvas.events()
                 n=0
 
-        new = steer(vertices[v], p)
-        bad = 0
+        reject = 0
         for o in obstacles:
-            if lineHitsRect(vertices[v],new,o) or inRect(new,o,1):
-                bad = 1
-                # reject
+            if lineHitsRect(vertices[v],p,o) or inRect(p,o,1):
+                reject = 1
                 break
-        if bad:
-            # reject
+        if reject:
             continue
 
-        k = pointToVertex( new )   # is the new vertex ID
+        k = pointToVertex( p )   # is the new vertex ID
         G[nodes].append(k)
         G[edges].append( (v,k) )
         if visualize:
             canvas.polyline(  [vertices[v], vertices[k] ]  )
             
         if pointPointDistance( p, [tx,ty] ) < SMALLSTEP :
-            print "Target achieved.", len(G[nodes]), "nodes in entire tree"
+            print "Target achieved in ", numIterations, " iterations.", len(G[nodes]), "nodes in entire tree, "
             if visualize:
                 t = pointToVertex([tx, ty])  # is the new vertex ID
                 G[edges].append((k, t))
@@ -217,10 +216,11 @@ def rrt_search(G, tx, ty, canvas):
                 # while 1:
                 #     # backtrace and show the solution ...
                 #     canvas.events()
+                nsteps = 0
                 totaldist = 0
                 while 1:
                     oldp = vertices[k]  # remember point to compute distance
-                    k = returnParent(k, canvas)  # follow links back to root.
+                    k = returnParent(k, canvas, G)  # follow links back to root.
                     canvas.events()
                     if k <= 1: break  # have we arrived?
                     nsteps = nsteps + 1  # count steps

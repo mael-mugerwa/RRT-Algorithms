@@ -3,7 +3,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--world', type=str, default="shot.png")
     parser.add_argument('--step_size', type=int, default=6)
-    parser.add_argument('--rrt_sampling_policy', type=str, default="uniform")
+    parser.add_argument('--rrt_sampling_policy', type=str, default="gaussian")
 
     parser.add_argument('--start_pos_x', type=int, default=10)
     parser.add_argument('--start_pos_y', type=int, default=270)
